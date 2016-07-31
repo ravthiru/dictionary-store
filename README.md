@@ -2,7 +2,7 @@
 
 
 While solving a word puzzle, i generate words with all combinations of the alphabets(a-z) 
-and filter the words, if the word is a dictionary word. So i want a data-structure
+and filter them if it is a dictionary word. So i want a data-structure
 to store english dictionary words and then perform a look-up to check if it is a dictionary word.
 There are diffirent options to store Strings for look-up like using Hashmap, Trie.
 
