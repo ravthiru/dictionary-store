@@ -45,9 +45,15 @@ public class DictionaryStore {
 	// ascii code of 'a' is 97, offset for char's
 	private static final int ASCII_OFFSET = 96;
 
-	//store words as long 
+	//store for 12 letter words  
 	private ArrayList<Long> longDictionary;
 	
+	//store for 6 letter words
+	private ArrayList<Integer> intDictionary;
+	
+	//store for 3 letter words
+	private ArrayList<Short> shotDictionary;
+			
 	// dictionary words 
 	// used word file from https://github.com/dwyl/english-words
 	String wordFile;
@@ -56,14 +62,20 @@ public class DictionaryStore {
 		this.wordFile = wordFile;
 	}
 	/**
-	 * Loads all the dictionary words as long
-	 * as we are storing words which are less than 13 characters
+	 * Loads all the dictionary words as long,
+	 * storing words which are less than 13 characters
 	 * words more than 12 letters/alphabets can not be stored in a long
-	 * we need to use 2 longs to store long words. 
+	 * two longs will be use to store long words. 
 	 * @throws URISyntaxException
 	 */
 	public void loadDictionary() throws URISyntaxException {
 		try (Stream<String> stream = Files.lines(Paths.get(ClassLoader.getSystemResource(wordFile).toURI()), Charset.defaultCharset())) {
+			
+			// words less than 3 letters are stored in short
+			// words less than 6 letters are stored in int
+			// words less than 12 letters are stored in long
+			// words greater then 12 letters are stored in two long
+			
 			longDictionary = (ArrayList<Long>) stream.filter(line -> line.length() < 13).map(String::trim)
 					.map(this::encodeWordInLong).collect(Collectors.toList());
 		} catch (IOException e) {
