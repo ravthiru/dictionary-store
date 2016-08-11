@@ -26,16 +26,15 @@
 
 package com.examples;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class DictionaryStore {
 
@@ -48,6 +47,10 @@ public class DictionaryStore {
 	//store for 12 letter words  
 	private ArrayList<Long> longDictionary;
 	
+	//store for 24 letter words, 12 letter in each arrayList
+	private ArrayList<Long> leftLongDictionary;
+	private ArrayList<Long> rightLongDictionary;	
+	
 	//store for 6 letter words
 	private ArrayList<Integer> intDictionary;
 	
@@ -57,7 +60,8 @@ public class DictionaryStore {
 	// dictionary words 
 	// used word file from https://github.com/dwyl/english-words
 	String wordFile;
-
+	BitSet set; 
+	int i = Integer.MAX_VALUE;
 	public DictionaryStore(String wordFile) {
 		this.wordFile = wordFile;
 	}
@@ -69,19 +73,31 @@ public class DictionaryStore {
 	 * @throws URISyntaxException
 	 */
 	public void loadDictionary() throws URISyntaxException {
-		try (Stream<String> stream = Files.lines(Paths.get(ClassLoader.getSystemResource(wordFile).toURI()), Charset.defaultCharset())) {
-			
-			// words less than 3 letters are stored in short
-			// words less than 6 letters are stored in int
-			// words less than 12 letters are stored in long
-			// words greater then 12 letters are stored in two long
-			
-			longDictionary = (ArrayList<Long>) stream.filter(line -> line.length() < 13).map(String::trim)
-					.map(this::encodeWordInLong).collect(Collectors.toList());
+		longDictionary = new ArrayList<Long>();
+		leftLongDictionary = new ArrayList<Long>();
+		rightLongDictionary = new ArrayList<Long>();
+		
+		try (BufferedReader reader = Files.newBufferedReader(Paths.get(ClassLoader.getSystemResource(wordFile).toURI()))) {
+			String word;
+			while ((word = reader.readLine()) != null) {
+				word = word.trim();
+				if(word.length()<=12){
+					// words less than 12 letters are stored in long
+					longDictionary.add(encodeWordInLong(word));
+				}else if(word.length() > 12 && word.length()<=24){
+					// words greater than 12 letters and less than 24 letters are stored in two longs
+					//if word is between 12 to 24 chars, first 12 chars will be in left dictionary
+					leftLongDictionary.add(encodeWordInLong(word.substring(0,12)));
+					//if word is between 12 to 24 chars, chars from 12-24 will be in right dictionary
+					rightLongDictionary.add(encodeWordInLong(word.substring(12)));
+				}
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		Collections.sort(longDictionary);
+		Collections.sort(leftLongDictionary);
+		Collections.sort(rightLongDictionary);
 	}
 
 	public static void main(String[] args) throws URISyntaxException {
