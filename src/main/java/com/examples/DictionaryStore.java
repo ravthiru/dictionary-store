@@ -44,51 +44,57 @@ public class DictionaryStore {
 	// ascii code of 'a' is 97, offset for char's
 	private static final int ASCII_OFFSET = 96;
 
-	//store for 12 letter words  
+	// store for 12 letter words
 	private ArrayList<Long> longDictionary;
-	
-	//store for 24 letter words, 12 letter in each arrayList
+
+	// store for 24 letter words, 12 letter in each arrayList
 	private ArrayList<Long> leftLongDictionary;
-	private ArrayList<Long> rightLongDictionary;	
-	
-	//store for 6 letter words
+	private ArrayList<Long> rightLongDictionary;
+
+	// store for 6 letter words
 	private ArrayList<Integer> intDictionary;
-	
-	//store for 3 letter words
+
+	// store for 3 letter words
 	private ArrayList<Short> shotDictionary;
-			
-	// dictionary words 
+
+	// dictionary words
 	// used word file from https://github.com/dwyl/english-words
 	String wordFile;
-	BitSet set; 
+	BitSet set;
 	int i = Integer.MAX_VALUE;
+
 	public DictionaryStore(String wordFile) {
 		this.wordFile = wordFile;
 	}
+
 	/**
-	 * Loads all the dictionary words as long,
-	 * storing words which are less than 13 characters
-	 * words more than 12 letters/alphabets can not be stored in a long
-	 * two longs will be use to store long words. 
+	 * Loads all the dictionary words as long, storing words which are less than
+	 * 13 characters words more than 12 letters/alphabets can not be stored in a
+	 * long two longs will be use to store long words.
+	 * 
 	 * @throws URISyntaxException
 	 */
 	public void loadDictionary() throws URISyntaxException {
 		longDictionary = new ArrayList<Long>();
 		leftLongDictionary = new ArrayList<Long>();
 		rightLongDictionary = new ArrayList<Long>();
-		
-		try (BufferedReader reader = Files.newBufferedReader(Paths.get(ClassLoader.getSystemResource(wordFile).toURI()))) {
+
+		try (BufferedReader reader = Files
+				.newBufferedReader(Paths.get(ClassLoader.getSystemResource(wordFile).toURI()))) {
 			String word;
 			while ((word = reader.readLine()) != null) {
 				word = word.trim();
-				if(word.length()<=12){
+				if (word.length() <= 12) {
 					// words less than 12 letters are stored in long
 					longDictionary.add(encodeWordInLong(word));
-				}else if(word.length() > 12 && word.length()<=24){
-					// words greater than 12 letters and less than 24 letters are stored in two longs
-					//if word is between 12 to 24 chars, first 12 chars will be in left dictionary
-					leftLongDictionary.add(encodeWordInLong(word.substring(0,12)));
-					//if word is between 12 to 24 chars, chars from 12-24 will be in right dictionary
+				} else if (word.length() > 12 && word.length() <= 24) {
+					// words greater than 12 letters and less than 24 letters
+					// are stored in two longs
+					// if word is between 12 to 24 chars, first 12 chars will be
+					// in left dictionary
+					leftLongDictionary.add(encodeWordInLong(word.substring(0, 12)));
+					// if word is between 12 to 24 chars, chars from 12-24 will
+					// be in right dictionary
 					rightLongDictionary.add(encodeWordInLong(word.substring(12)));
 				}
 			}
@@ -105,21 +111,49 @@ public class DictionaryStore {
 		DictionaryStore dictionary = new DictionaryStore(wordFile);
 		dictionary.loadDictionary();
 		String searchWord = "developer";
+		System.out.println("Found "+searchWord+" "+dictionary.lookUpWord(searchWord));
 		dictionary.lookUpWord(searchWord);
+		searchWord = "anteconsonantal";
+		System.out.println("Found "+searchWord+" "+dictionary.lookUpWord(searchWord));
 	}
 
 	public boolean lookUpWord(String searchWord) {
+		if (searchWord.length() > 12 && searchWord.length() <= 24) {
+			return lookUpLargerThan12charsWord(searchWord);
+		}
 		long encodedWord = encodeWordInLong(searchWord);
 		int found = Arrays.binarySearch(longDictionary.toArray(), encodedWord);
 		if (found > 0) {
-			System.out.println("Valid Word");
 			return true;
 		} else {
-			System.out.println("Invalid word ");
 			return false;
 		}
 	}
 
+	public boolean lookUpLargerThan12charsWord(String searchWord) {
+		String leftSearchWord = searchWord.substring(0, 12);
+		String rightSearchWord = searchWord.substring(12);
+		long leftLong = encodeWordInLong(leftSearchWord);
+		int leftFound = Arrays.binarySearch(leftLongDictionary.toArray(), leftLong);
+		if (leftFound > 0) {
+			// now search in right long
+			long rightLong = encodeWordInLong(rightSearchWord);
+			int rightFound = Arrays.binarySearch(rightLongDictionary.toArray(), rightLong);
+			if (rightFound > 0) {
+				return true;
+			}
+		}
+
+		return false;
+
+	}
+
+	/**
+	 * Convert word encoded as long to String
+	 * 
+	 * @param value
+	 * @return
+	 */
 	public String decodeWordfromLong(long value) {
 		StringBuffer word = new StringBuffer();
 		while (value != 0) {
@@ -135,8 +169,8 @@ public class DictionaryStore {
 	}
 
 	/**
-	 * converts string to long, it can handle words of size 
-	 * equal or less than 12 characters
+	 * converts string to long, it can handle words of size equal or less than
+	 * 12 characters
 	 * 
 	 * @param word
 	 * @return
