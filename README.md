@@ -1,4 +1,4 @@
-# dictionary-store
+# Dictionary-store
 
 
 While solving a word puzzle, i generate words with all combinations of the alphabets(a-z) 
